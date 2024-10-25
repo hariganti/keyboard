@@ -77,16 +77,16 @@ module switches()
 module stand(span, height, lift, thickness, recess, kerf)
 {
   interference  = 0.1;
-  legWidth      = 3 + kerf;
+  legWidth      = 3 + kerf; // *** THIS ALREADY ADDS IN THE KERF, SO REMOVE SUBSEQUENTLY! ***
   points        =
   [
     [-(span - legWidth) / 2 + kerf,  -height    + kerf                    ],
-    [-(span - legWidth) / 2 + kerf,  thickness  + kerf                    ],
-    [-(span + legWidth) / 2 - kerf,  thickness  + kerf                    ],
+    [-(span - legWidth) / 2 + kerf,   thickness + kerf                    ],
+    [-(span + legWidth) / 2 - kerf,   thickness + kerf                    ],
     [-(span + legWidth) / 2 - kerf,  -(height   + legWidth + kerf)        ],
     [ (span + legWidth) / 2 + kerf,  -(height   + legWidth + lift + kerf) ],
-    [ (span + legWidth) / 2 + kerf,  thickness  + kerf                    ],
-    [ (span - legWidth) / 2 - kerf,  thickness  + kerf                    ],
+    [ (span + legWidth) / 2 + kerf,   thickness + kerf                    ],
+    [ (span - legWidth) / 2 - kerf,   thickness + kerf                    ],
     [ (span - legWidth) / 2 - kerf,  -height    + kerf                    ]
   ];
 
@@ -126,9 +126,61 @@ module stand(span, height, lift, thickness, recess, kerf)
   }
 }
 
+module bracket_stand(span, height, lift, thickness, recess, conLen, kerf)
+{
+  angle     = atan((lift - 1) / span);
+  legWidth  = 3 + kerf;
+  drop      = (conLen + legWidth) * tan(angle);
+  nomSpan   = (span + legWidth) / 2 - 0.5 + kerf;
+  points    =
+  [
+    [nomSpan,                             -(height + legWidth + lift + kerf)        ],
+    [nomSpan + conLen + legWidth + kerf,  -(height + legWidth + lift + drop + kerf) ],
+    [nomSpan + conLen + legWidth + kerf,   thickness + kerf                         ],
+    [nomSpan + conLen - kerf,              thickness + kerf                         ],
+    [nomSpan + conLen - kerf,              thickness + kerf - 10.1                  ],
+    [nomSpan,                              thickness + kerf - 10.1                  ]
+  ];
+
+  difference()
+  {
+    union()
+    {
+      stand(span, height, lift, thickness, recess, kerf);
+      polygon(points = points);
+      translate([nomSpan + conLen + legWidth / 2, thickness + kerf])
+        circle(d = legWidth + 2 * kerf);
+    }
+
+    translate([(span + lift + 35) / 2, 1.5 - 5])
+      square([34.2, 10.2 - kerf], center = true);
+
+    translate([(span + lift + 35) / 2, 1.5 - 10 - 2 / 2])
+      square([3.2 - 2 * kerf, 2], center = true);
+  }
+}
+
 module stiffener(width, height, kerf)
 {
   radius_rect(width + 2 * kerf, height + 2 * kerf, 1);
+}
+
+module conHolder(span, count, conLen, kerf)
+{
+  start = count / 2;
+  difference()
+  {
+    radius_rect(span * count + 10 + 2 * kerf, 10, 1);
+
+    for(i = [-start:start])
+    {
+      translate([i * span, -(10 - 4) / 2])
+        square([3.2 - 2 * kerf, 4 + 2 * kerf], center = true);
+    }
+
+    translate([0, 4])
+      square([conLen + 2 * kerf, 6 + kerf], center = true);
+  }
 }
 
 /* Laser parameters */
@@ -139,10 +191,11 @@ kerf_1_5mm = 0.113;
 /* Switch plate parameters */
 
 margin        = 12.50;
-recess        = 0.625;
+// recess        = 0.625;
+recess = 1;
 spacing       = 19.05;
 standoff      = 8.000;
-legWidth      = 3.000;
+legWidth      = 3.000; // THIS IS NOT ACTUALLY DEFINING LEGWIDTH!!!
 thickness     = 1.500;
 cutoutRadius  = 0.500;
 layout        =
@@ -153,8 +206,10 @@ layout        =
   [1,     1,    1,    1.25,       2,          2,          2,    1.75, 1,    1,    1   ]
 ];
 
-height  = margin + spacing * len(layout);
-width   = margin + spacing * sumv(layout[0], len(layout[0]) - 1);
+height        = margin + spacing * len(layout);
+width         = margin + spacing * sumv(layout[0], len(layout[0]) - 1);
+xnom          = width / 2;
+recessSpacing = width / 12;
 
 module render_3d()
 {
@@ -163,14 +218,20 @@ module render_3d()
 
   switches();
 
-  xnom          = width / 2;
-  recessSpacing = width / 12;
-  for(i = [-5:5])
+  for(i = [-2:5])
   {
     translate([xnom + i * recessSpacing, height / 2, 0])
       rotate([90, 0, 90])
         linear_extrude(height = 3.175, center = true)
           stand(height, standoff, legWidth, thickness, recess, 0);
+  }
+
+  for(i = [-5:-3])
+  {
+    translate([xnom + i * recessSpacing, height / 2, 0])
+      rotate([90, 0, 90])
+        linear_extrude(height = 3.175, center = true)
+          bracket_stand(height, standoff, legWidth, thickness, recess, 35, 0);
   }
 
   for(i = [-1, 1])
@@ -180,14 +241,27 @@ module render_3d()
         linear_extrude(height = 3.175, center = true)
           stiffener(width - 5, standoff, 0);
   }
+
+  translate([49.5, height + legWidth / 2 + 17.5, -9.5])
+    rotate([90, 0, 0])
+      linear_extrude(height = 3.175, center = true)
+        conHolder(recessSpacing, 2, 45, 0);
+
+  // Controller breadboard
+  // translate([49.5, height + legWidth / 2 + 17.5, 1.5 - 5])
+    // cube([45, 34.9, 10], center = true);
 }
 
-render_3d();
+// render_3d();
 
-// stiffener(width - 5, standoff - 0.8, kerf_3_0mm);
+// stiffener(width - 5, standoff, kerf_3_0mm);
 
 // stand(height, standoff, legWidth, thickness, recess, kerf_3_0mm);
 
-// plate(width, height, recess, kerf_1_5mm);
+// bracket_stand(height, standoff, legWidth, thickness, recess, 35, kerf_3_0mm);
+
+conHolder(recessSpacing, 2, 45, kerf_3_0mm);
+
+// plate(width, height, recess, 3.3, kerf_1_5mm);
 
 // switchArray([[1]], 19.05, kerf_1_5mm);
