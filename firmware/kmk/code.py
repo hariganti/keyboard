@@ -5,6 +5,7 @@ import board
 import digitalio
 
 from kmk.keys                   import KC               as K
+from kmk.keys                   import Key
 from kmk.scanners               import DiodeOrientation
 from kmk.kmk_keyboard           import KMKKeyboard
 from kmk.modules.layers         import Layers
@@ -36,9 +37,44 @@ keyboard.col_pins           = (
 )
 
 ### Modules & Extensions ###
-keyboard.modules.append(Layers())
+class LEDLayers(Layers): # Extends the layers class by activating an LED on layer activation
+  def activate_layer(self, keyboard, layer, idx = None):
+    super().activate_layer(keyboard, layer, idx)
+    if layer:
+      led.value = True
+    else: # Necessary when using the "return to base layer" key
+      led.value = False
+
+    return
+
+  def deactivate_layer(self, keyboard, layer):
+    super().deactivate_layer(keyboard, layer)
+    led.value = False
+    return
+
+class KeyLock(Key): # Adds a custom key for a generic key lock action (ex. Shift Lock)
+  def __init__(self, key):
+    self._key         = key
+    self._is_pressed  = False
+    return
+
+  def on_press(self, keyboard, coord_int = None):
+    if self._is_pressed:
+      keyboard.remove_key(self._key)
+      self._is_pressed = False
+    else:
+      keyboard.add_key(self._key)
+      self._is_pressed = True
+
+    return
+
+  def on_release(self, keyboard, coord_int = None):
+    return
+
 keyboard.modules.append(HoldTap())
+keyboard.modules.append(LEDLayers())
 keyboard.modules.append(StickyKeys())
+keyboard.extensions.append(led)
 keyboard.extensions.append(MediaKeys())
 
 ### Layers ###
@@ -50,21 +86,21 @@ LMED = 4 # Media
 LPTT = 5 # Push-to-Talk
 
 ### Custom Actions ###                              Tap                 | Hold
-# Layer hold/toggle actions
+# Layer Hold/Toggle Actions
 LDEF_T = K.TO(LDEF)                               # LAYER Base
 LNAV_A = K.TT(LNAV)                               # LAYER Navigation    | LAYER Navigation
 LNUM_A = K.TT(LNUM)                               # LAYER Numpad        | LAYER Numpad
 LSYM_A = K.TT(LSYM)                               # LAYER Symbols       | LAYER Symbols
 LMED_A = K.LT(LMED, K.RALT)                       # Alt                 | LAYER Media
 
-# Space mods
+# Space Mods
 CTL = K.HT(K.SPC, K.LCTL, tap_interrupted = True) # Space               | Ctrl
 GUI = K.HT(K.SPC, K.LGUI, tap_interrupted = True) # Space               | Super
 ALT = K.HT(K.SPC, K.LALT, tap_interrupted = True) # Space               | Alt
 
-# Sticky shifts
+# Sticky Shifts
 SFT  = K.SK(K.LSFT)                               # Shift               | Shift
-SFLK = K.HT(K.NO, K.LSFT)                         # NONE                | Shift
+SFLK = K.HT(KeyLock(K.LSFT), K.LSFT)              # Shift               | Shift
 
 # M
 M1 = K.HT(K.LGUI(K.SPC), K.LGUI(K.L))             # Super + Space       | Super + L
@@ -82,6 +118,7 @@ RSUB = K.LSFT(K.TAB)                              # Shift + Tab
 SENT = K.LSFT(K.ENT)                              # Shift + Enter
 
 # Window Management
+TFCS = K.LGUI(K.A)                                # Super + A
 GAPS = K.LGUI(K.F)                                # Super + F
 FLOT = K.LSFT(K.F1)                               # Shift + F1
 ROTL = K.LSFT(K.F2)                               # Shift + F2
@@ -131,10 +168,10 @@ keyboard.keymap = [ # TODO: Add top layer with arrow keys as Home/End, Page Up/D
   ],
   [ # 3 - Navigation
     # 1     2       3       4       5       6       7       8       9       10      11      12      13
-    K.ESC,  RCON,   FCON,   DIST,   SRNK,   GROW,   K.NO,   K.PGUP, K.UP,   K.PGDN, K.NO,   RSEC,   FSEC,   # 1
-    K.TRNS, RTAB,   FTAB,   FLOT,   ROTL,   ROTR,   K.HOME, K.LEFT, K.DOWN, K.RGHT, K.END,  K.NO,   GAPS,   # 2
+    K.ESC,  RCON,   FCON,   SRNK,   DIST,   GROW,   K.NO,   K.PGUP, K.UP,   K.PGDN, K.NO,   RSEC,   FSEC,   # 1
+    K.TRNS, RTAB,   FTAB,   ROTL,   FLOT,   ROTR,   K.HOME, K.LEFT, K.DOWN, K.RGHT, K.END,  TFCS,   GAPS,   # 2
     K.TRNS, WKSP1,  WKSP2,  WKSP3,  WKSP4,  WKSP5,  WKSP6,  WKSP7,  WKSP8,  WKSP9,  WKSP0,  K.NO,   K.PGUP, # 3
-    K.TRNS, K.TRNS, K.TRNS, SFLK,   K.LCTL, K.LGUI, K.LALT, K.INS,  K.HOME, K.PGDN, K.END,  K.TRNS, K.TRNS, # 4
+    K.TRNS, K.TRNS, K.INS,  SFLK,   K.LCTL, K.LGUI, K.LALT, K.NO,   K.HOME, K.PGDN, K.END,  K.TRNS, K.TRNS, # 4
   ],
   [ # 4 - Media
     # 1     2       3       4       5       6       7       8       9       10      11      12      13
