@@ -67,8 +67,8 @@ SFT  = K.SK(K.LSFT)                               # Shift               | Shift
 SFLK = K.HT(K.NO, K.LSFT)                         # NONE                | Shift
 
 # M
-M1 = K.HT(K.LGUI(K.SPC), K.LCTL)                  # Super + Space       | Ctrl
-M2 = K.HT(K.LGUI(K.E),   K.LGUI(K.L))             # Super + E           | Super + L
+M1 = K.HT(K.LGUI(K.SPC), K.LGUI(K.L))             # Super + Space       | Super + L
+M2 = K.HT(K.LGUI(K.E),   LDEF_T)                  # Super + E           | LAYER Base
 
 # Movement
 FTAB = K.LCTL(K.TAB)                              # Ctrl  + Tab
@@ -82,6 +82,7 @@ RSUB = K.LSFT(K.TAB)                              # Shift + Tab
 SENT = K.LSFT(K.ENT)                              # Shift + Enter
 
 # Window Management
+GAPS = K.LGUI(K.F)                                # Super + F
 FLOT = K.LSFT(K.F1)                               # Shift + F1
 ROTL = K.LSFT(K.F2)                               # Shift + F2
 ROTR = K.LSFT(K.F3)                               # Shift + F3
@@ -131,7 +132,7 @@ keyboard.keymap = [ # TODO: Add top layer with arrow keys as Home/End, Page Up/D
   [ # 3 - Navigation
     # 1     2       3       4       5       6       7       8       9       10      11      12      13
     K.ESC,  RCON,   FCON,   DIST,   SRNK,   GROW,   K.NO,   K.PGUP, K.UP,   K.PGDN, K.NO,   RSEC,   FSEC,   # 1
-    K.TRNS, RTAB,   FTAB,   FLOT,   ROTL,   ROTR,   K.HOME, K.LEFT, K.DOWN, K.RGHT, K.END,  K.NO,   K.NO,   # 2
+    K.TRNS, RTAB,   FTAB,   FLOT,   ROTL,   ROTR,   K.HOME, K.LEFT, K.DOWN, K.RGHT, K.END,  K.NO,   GAPS,   # 2
     K.TRNS, WKSP1,  WKSP2,  WKSP3,  WKSP4,  WKSP5,  WKSP6,  WKSP7,  WKSP8,  WKSP9,  WKSP0,  K.NO,   K.PGUP, # 3
     K.TRNS, K.TRNS, K.TRNS, SFLK,   K.LCTL, K.LGUI, K.LALT, K.INS,  K.HOME, K.PGDN, K.END,  K.TRNS, K.TRNS, # 4
   ],
