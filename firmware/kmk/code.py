@@ -9,6 +9,7 @@ from kmk.keys                   import Key
 from kmk.scanners               import DiodeOrientation
 from kmk.kmk_keyboard           import KMKKeyboard
 from kmk.modules.layers         import Layers
+from kmk.modules.combos         import Combos, Chord
 from kmk.modules.holdtap        import HoldTap
 from kmk.modules.sticky_keys    import StickyKeys
 from kmk.extensions.media_keys  import MediaKeys
@@ -71,6 +72,12 @@ class KeyLock(Key): # Adds a custom key for a generic key lock action (ex. Shift
   def on_release(self, keyboard, coord_int = None):
     return
 
+combos        = Combos()
+combos.combos = [
+  Chord((K.SLSH, K.BSLS), K.QUES, timeout = 1000)
+]
+
+keyboard.modules.append(combos)
 keyboard.modules.append(HoldTap())
 keyboard.modules.append(LEDLayers())
 keyboard.modules.append(StickyKeys())
